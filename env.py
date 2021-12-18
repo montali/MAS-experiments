@@ -60,20 +60,21 @@ class GridWorld:
         elif move == "right" and self.player_position[1] < self.size[1] - 1:
             target[1] += 1
         else:
-            raise InvalidMoveException(
-                f"Invalid move: can't go {move} in {self.player_position}"
-            )
+            return tuple(self.player_position), 0, False
+            # raise InvalidMoveException(
+            #     f"Invalid move: can't go {move} in {self.player_position}"
+            # )
         if tuple(target) == self.goal:
             self.done = True
-            return self.player_position, 50, True
+            return tuple(self.player_position), 50, True
         elif tuple(target) in self.pitfalls:
             self.done = True
-            return self.player_position, -50, True
+            return tuple(self.player_position), -50, True
         elif tuple(target) in self.walls:
-            return self.player_position, 0, False
+            return tuple(self.player_position), 0, False
         else:
             self.player_position = target
-            return self.player_position, 0, False
+            return tuple(self.player_position), 0, False
 
     def __repr__(self):
         if self.done:
