@@ -49,6 +49,10 @@ class GridWorld:
         self.done = False
 
     def step(self, move: str):
+        """
+        Steps the agent in a direction.
+        :param move: the direction to move: ["up", "down", "left", "right"]
+        """
         assert move in ["up", "down", "left", "right"], "Invalid move"
         target = self.player_position[:]
         if move == "up" and self.player_position[0] > 0:
@@ -77,6 +81,9 @@ class GridWorld:
             return tuple(self.player_position), 0, False
 
     def __repr__(self):
+        """
+        Represents the game status graphically.
+        """
         if self.done:
             return f"Game over"
         nice_repr = np.full(self.size, "🏝")

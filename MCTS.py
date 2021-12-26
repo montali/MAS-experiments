@@ -78,11 +78,25 @@ class MCTS:
         start_time = time.time()
         if self.verbose:
             print("Root node before search: " + str(self.root))
+        ucb_l = []
+        ucb_r = []
+        val_l = []
+        val_r = []
         while time.time() - start_time < time_limit:
             node = self.selection(self.root)
             self.expansion(node)
             node = self.simulation(node)
             self.backpropagation(node)
+            ucb_l.append(
+                root.children[0].value / (root.children[0].visits + 1)
+                + 0.4 * np.sqrt(np.log(root.visits) / root.children[0].visits)
+            )
+            ucb_r.append(
+                root.children[1].value / (root.children[1].visits + 1)
+                + 0.4 * np.sqrt(np.log(root.visits) / root.children[1].visits)
+            )
+            val_l.append(root.children[0].value / (root.children[0].visits + 1))
+            val_r.append(root.children[1].value / (root.children[1].visits + 1))
         if self.verbose:
             print(
                 f"Root's children after search:{len(self.root.children)} "
@@ -93,7 +107,19 @@ class MCTS:
         ) in self.root.children:  # In the last run, the target is a child of the root
             if child.info == self.target:
                 return child
-        return max(self.root.children, key=lambda x: x.value / x.visits)
+            x = range(0, len(ucb_l))
+            plt.plot(x, ucb_l, "--", label="UCB, Correct letter")
+            plt.plot(x, val_l, label="Q-value, Correct letter")
+            plt.plot(x, ucb_r, "--", label="UCB, Wrong letter")
+            plt.plot(x, val_r, label="Q-value, Wrong letter")
+            plt.xlabel("Iterations")
+            plt.ylabel("Average value")
+            plt.legend()
+            plt.show()
+
+        return max(
+            self.root.children, key=lambda x: x.value / x.visits if x.visits > 0 else 0
+        )
 
     def selection(self, node):
         """
@@ -179,7 +205,11 @@ class MCTS:
                 score = np.inf
             else:
                 exploit = child.value / child.visits
-                explore = np.sqrt(np.log(node.visits) / child.visits)
+                explore = (
+                    np.sqrt(np.log(node.visits) / child.visits)
+                    if node.visits > 0
+                    else np.inf
+                )
                 score = exploit + c * explore
             if score == best_score:
                 best_children.append(child)
@@ -190,12 +220,14 @@ class MCTS:
 
 
 if __name__ == "__main__":
-    target_depth = 12
-    target = "".join(np.random.choice(["L", "R"], size=target_depth))
-    result = ""
-    while len(result) < target_depth:
-        root = Node(result)
-        mcts = MCTS(root, target, verbose=True)
-        picked_letter = mcts.search(time_limit=2).info
-        result = picked_letter
-        print(f"Searched string now {result}, target={target}")
+    for c in [0.1, 0.2, 0.5, 0.6, 0.7, 0.8, 0.9, 1, 2, 3, 4, 5]:
+        target_depth = 12
+        target = "".join(np.random.choice(["L", "R"], size=target_depth))
+        result = ""
+        while len(result) < target_depth:
+            root = Node(result)
+            mcts = MCTS(root, target, c, verbose=True)
+            picked_letter = mcts.search(time_limit=2).info
+            result = picked_letter
+            print(f"Searched string now {result}, target={target}, C={c}")
+        print(f"Found {result==target} with C={c}")

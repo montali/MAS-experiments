@@ -2,6 +2,9 @@
 import numpy as np
 from env import GridWorld
 import random
+import matplotlib.pyplot as plt
+
+STEPS = 1000000
 
 
 def print_policy(policy):
@@ -38,7 +41,8 @@ alpha = 0.1
 gamma = 0.9
 epsilon = 0.8
 print(env)
-for _ in range(1000000):
+history = np.zeros((STEPS, *q_values.shape))
+for _ in range(STEPS):
     policy_changed = False
     if random.random() < epsilon:
         action = np.random.randint(0, 4)
@@ -54,4 +58,13 @@ for _ in range(1000000):
         - q_values[old_position][action]
     )
     q_values[old_position][action] += update
+    history[_] = q_values
+diffn = np.zeros((STEPS))
+for _ in range(STEPS):
+    diffn[_] = np.sum(np.abs(history[_] - q_values))
+plt.plot(range(STEPS), diffn)
+plt.xlabel("Iterations")
+plt.ylabel("Absolute difference from last Q")
+print(diffn[0])
+plt.show()
 print_policy(np.argmax(q_values, axis=2))
